@@ -165,40 +165,38 @@
     };
 
         // Function to format Tracert output into a table
-        function formatTracertOutput(output) {
-        const lines = output.split("\n");  // Split output into lines
-        let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
+function formatTracertOutput(output) {
+    const lines = output.split("\n");  // Split output into lines
+    let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
-        lines.forEach(line => {
-            line = line.trim();
-            if (line.startsWith("traceroute") || line === "") return; // Skip header & empty lines
+    lines.forEach(line => {
+        line = line.trim();
+        if (line.startsWith("traceroute") || line === "") return; // Skip header & empty lines
+        
+        const parts = line.split(/\s+/); // Split by whitespace
+        
+        // If it looks like a valid traceroute line
+        if (!isNaN(parts[0])) {
+            const hop = parts[0];
+            let responseTimes = parts.slice(1).filter(p => p.includes("ms") || p === "*").join(", "); // Keep only response times and '*'
+            let ipHost = parts.slice(1).filter(p => !p.includes("ms") && p !== "*").join(" "); // Keep only IPs and hostnames
 
-            const parts = line.split(/\s+/); // Split by whitespace
-            if (!isNaN(parts[0])) {  // If the first item is a number (hop number)
-                const hop = parts.shift();
-                let ipHost = "";
-                let responseTimes = [];
+            if (!responseTimes) responseTimes = "No response";
+            if (!ipHost) ipHost = "Unknown";
 
-                parts.forEach((part, index) => {
-                    if (part.includes("ms") || part === "*") {
-                        responseTimes.push(part); // Collect response times
-                    } else if (index === 0 || !parts[index - 1].includes("ms")) {
-                        ipHost = part; // Assume the first non-ms value is the IP or host
-                    }
-                });
-
-                tableHTML += `<tr>
-                    <td>${hop}</td>
-                    <td>${ipHost || "Unknown"}</td>
-                    <td>${responseTimes.join(", ") || "No response"}</td>
-                </tr>`;
-            }
-        });
+            tableHTML += `<tr>
+                <td>${hop}</td>
+                <td>${ipHost}</td>
+                <td>${responseTimes}</td>
+            </tr>`;
+        }
+    });
 
     tableHTML += "</table>";
     return tableHTML;
 }
 
+       
 
     tableHTML += "</table>";
     return tableHTML;
