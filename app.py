@@ -184,17 +184,9 @@ class WebsitePentestToolkit:
             return {'error': str(e)}
 
     def run_tracert(self) -> dict:
-        """Run Traceroute on Linux and Tracert on Windows"""
+        """Run Tracert instead of MTR using Windows command"""
         try:
-            if os.name == 'nt':  # Windows
-                cmd = f'tracert -d {self.target_url}'
-            else:  # Linux/Mac
-                # Check if traceroute is installed
-                if subprocess.run("which traceroute", shell=True, capture_output=True).returncode != 0:
-                    subprocess.run("apt-get update && apt-get install -y traceroute", shell=True, check=True)
-
-                cmd = f'traceroute -n {self.target_url}'
-
+            cmd = f'tracert -d {self.target_url}'  # `-d` prevents hostname resolution for speed
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
             if result.returncode != 0:
