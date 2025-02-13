@@ -166,26 +166,36 @@
 
         // Function to format Tracert output into a table
         function formatTracertOutput(output) {
-        const lines = output.split("\n");
-        let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
+    const lines = output.split("\n");  // Split output into lines
+    let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
-        lines.forEach(line => {
-            const match = line.match(/^\s*(\d+)\s+([\d.*]+\s*ms|\*+)\s+([\d.*]+\s*ms|\*+)\s+([\d.*]+\s*ms|\*+)\s*(.*)$/);
+    lines.forEach(line => {
+        line = line.trim();
+        if (line.startsWith("traceroute") || line === "") return; // Skip header & empty lines
+        
+        const parts = line.split(/\s+/); // Split by whitespace
+        
+        // If it looks like a valid traceroute line
+        if (!isNaN(parts[0])) {
+            const hop = parts[0];
+            let responseTimes = parts.slice(1).filter(p => p.includes("ms") || p === "*").join(", "); // Keep only response times and '*'
+            let ipHost = parts.slice(1).filter(p => !p.includes("ms") && p !== "*").join(" "); // Keep only IPs and hostnames
 
-            if (match) {
-                tableHTML += `<tr>
-                    <td>${match[1]}</td> <!-- Hop Number -->
-                    <td>${match[5]}</td> <!-- IP Address or Hostname -->
-                    <td>${match[2]}, ${match[3]}, ${match[4]}</td> <!-- Response Times -->
-                </tr>`;
-            } else if (line.trim() !== "") {
-                tableHTML += `<tr><td colspan="3">${line.trim()}</td></tr>`;
-            }
-        });
+            if (!responseTimes) responseTimes = "No response";
+            if (!ipHost) ipHost = "Unknown";
 
-        tableHTML += "</table>";
-        return tableHTML;
-    }
+            tableHTML += `<tr>
+                <td>${hop}</td>
+                <td>${ipHost}</td>
+                <td>${responseTimes}</td>
+            </tr>`;
+        }
+    });
+
+    tableHTML += "</table>";
+    return tableHTML;
+}
+
 
         // Handle PDF printing for scan results
         document.getElementById('printPdf').onclick = function() {
