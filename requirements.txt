@@ -6,3 +6,4 @@ whois
 dnspython
 pyOpenSSL
 whatweb
+colorama
