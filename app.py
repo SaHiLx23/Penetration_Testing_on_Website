@@ -184,9 +184,13 @@ class WebsitePentestToolkit:
             return {'error': str(e)}
     
     def run_tracert(self) -> dict:
-        """Run Tracert instead of MTR using Windows command"""
+        """Run Traceroute on Linux and Tracert on Windows"""
         try:
-            cmd = f'tracert -d {self.target_url}'  # `-d` prevents hostname resolution for speed
+            if os.name == 'nt':  # Windows
+                cmd = f'tracert -d {self.target_url}'
+            else:  # Linux/Mac
+                cmd = f'traceroute -n {self.target_url}'
+
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -196,6 +200,7 @@ class WebsitePentestToolkit:
 
         except Exception as e:
             return {'error': str(e)}
+
 
 
 class XSSScanner:
