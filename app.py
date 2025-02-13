@@ -473,18 +473,15 @@ def tracert_scan():
     target_url = request.form.get('url')
 
     if not target_url:
-        return jsonify({'error': 'No URL provided'}), 400  # Return HTTP 400 if no URL is provided
+        return jsonify({'error': 'No URL provided'}), 400
 
-    toolkit = WebsitePentestToolkit(target_url)  # Create an instance of the class
-    tracert_results = toolkit.run_tracert()  # Call run_tracert() from the class
+    toolkit = WebsitePentestToolkit(target_url)  
+    tracert_results = toolkit.run_tracert()
 
-    # Debugging logs for Flask console
-    print(f"Tracert Results for {target_url}: {tracert_results}")
+    print(f"Traceroute Output for {target_url}: {tracert_results}")  # Debugging log
 
-    if tracert_results.get('error'):
-        return jsonify({'error': tracert_results['error']}), 500  # Return HTTP 500 if Tracert fails
+    return jsonify(tracert_results)  
 
-    return jsonify(tracert_results)  # Return results as JSON
 
 
 if __name__ == "__main__":
