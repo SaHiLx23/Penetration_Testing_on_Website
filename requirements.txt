@@ -2,7 +2,7 @@ Flask
 requests
 bs4
 werkzeug
-whois
+python-whois
 dnspython
 pyOpenSSL
 whatweb
