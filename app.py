@@ -184,13 +184,22 @@ class WebsitePentestToolkit:
             return {'error': str(e)}
 
     def run_tracert(self) -> dict:
-        """Run Tracert instead of MTR using Windows command"""
+        """Run Traceroute on Windows, Use Ping on Linux if Traceroute is Missing"""
         try:
-            cmd = f'tracert -d {self.target_url}'  # `-d` prevents hostname resolution for speed
+            if os.name == 'nt':  # Windows
+                cmd = f'tracert -d {self.target_url}'
+            else:  # Linux (Render)
+                # Check if traceroute is installed
+                if subprocess.run("which traceroute", shell=True, capture_output=True).returncode == 0:
+                    cmd = f'traceroute -n {self.target_url}'
+                else:
+                    # Use ping as a fallback if traceroute is not available
+                    cmd = f'ping -c 4 {self.target_url}'
+
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
             if result.returncode != 0:
-                return {'error': f'Tracert command failed: {result.stderr}', 'output': None}
+                return {'error': f'Command failed: {result.stderr}', 'output': None}
 
             return {'output': result.stdout.strip(), 'error': None}
 
