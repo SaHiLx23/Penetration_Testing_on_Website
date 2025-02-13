@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Pentesting Toolkit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+        form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #357ab8;
+        }
+        #results, #mtrResults {
+            display: flex; /* Set display to flex for horizontal layout */
+            flex-direction: row; /* Arrange items in a row */
+            flex-wrap: wrap; /* Allow wrapping to the next line if necessary */
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            width: 80%; /* Set the same width for both boxes */
+            max-width: 600px;
+            max-height: 400px; /* Set a maximum height */
+            overflow-y: auto; /* Enable vertical scrolling */
+            overflow-x: auto; /* Enable horizontal scrolling if needed */
+            white-space: pre-wrap; /* Preserve whitespace and wrap lines */
+        }
+    
+        /* Optional: Add some spacing between the results */
+        #results > div, #mtrResults > div {
+            margin-right: 10px; /* Add space between items */
+        }
+        table {
+            width: 100%; /* Make the table responsive */
+            border-collapse: collapse; /* Collapse borders */
+        }
+        th, td {
+            border: 1px solid #ccc; /* Add border to table cells */
+            padding: 8px; /* Add padding */
+            text-align: left; /* Align text to the left */
+        }
+        th {
+            background-color: #f0f4f8; /* Light background for headers */
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <h1>Website Pentesting Toolkit</h1>
+
+    <form id="scanForm">
+        <label for="url">Enter Target URL for Scan (e.g., https://www.example.com):</label><br>
+        <input type="text" id="url" name="url" placeholder="https://www.example.com" required><br>
+        <button type="submit">Scan</button>
+        <button type="button" id="mtrButton" style="margin-top: 10px;">Run MTR</button>
+    </form>
+    
+    <!-- Results Display -->
+    <div id="results">
+        <div id="scanResultContent"></div>
+    </div>
+    <div id="mtrResults">
+        <div id="mtrResultContent"></div>
+    </div>
+    <button id="printPdf" style="margin-top: 20px; display: none;">Print Scan PDF</button>
+    <button id="printMtrPdf" style="margin-top: 10px; display: none;">Print MTR PDF</button>
+
+    <footer>
+        &copy; 2023 Website Pentesting Toolkit. All rights reserved.
+    </footer>
+
+    <script>
+        // Handle scan form submission
+        document.getElementById('scanForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+            const response = await fetch('/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ url })
+            });
+            const results = await response.json();
+            document.getElementById('scanResultContent').innerText = JSON.stringify(results, null, 2);
+            document.getElementById('printPdf').style.display = 'block'; // Show the Print PDF button
+        };
+
+        // Handle MTR button click
+        document.getElementById('mtrButton').onclick = async function() {
+            const url = document.getElementById('url').value; // Get user input
+            const domain = url.replace(/https?:\/\//, '').split('/')[0]; // Extract domain name
+            const response = await fetch('/mtr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ url: domain }) // Send only the domain
+            });
+
+            try {
+                const tracertResults = await response.json();
+                console.log("Tracert Output:", tracertResults); // Debugging log
+
+                if (tracertResults.error) {
+                    document.getElementById('mtrResultContent').innerText = "Error running Tracert: " + tracertResults.error;
+                    return;
+                }
+
+                // Ensure output is not empty
+                if (!tracertResults.output || tracertResults.output.trim() === "") {
+                    document.getElementById('mtrResultContent').innerText = "Tracert returned no output.";
+                    return;
+                }
+
+                // Convert Tracert output to an HTML-friendly format
+                document.getElementById('mtrResultContent').innerHTML = formatTracertOutput(tracertResults.output);
+                document.getElementById('printMtrPdf').style.display = 'block'; // Show Print PDF button
+            } catch (error) {
+                console.error("Error parsing Tracert response:", error);
+                document.getElementById('mtrResultContent').innerText = "Error running Tracert.";
+            }
+        };
+
+        // Function to format Tracert output into a table
+        function formatTracertOutput(output) {
+            const lines = output.split("\n");
+            let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
+
+            lines.forEach(line => {
+                const match = line.match(/^\s*(\d+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(.*)$/);
+
+                if (match) {
+                    tableHTML += `<tr>
+                        <td>${match[1]}</td> <!-- Hop Number -->
+                        <td>${match[5]}</td> <!-- IP Address or Hostname -->
+                        <td>${match[2]}, ${match[3]}, ${match[4]}</td> <!-- Response Times -->
+                    </tr>`;
+                } else if (line.includes("Request timed out.")) {
+                    tableHTML += `<tr>
+                        <td colspan="3">${line.trim()}</td>
+                    </tr>`;
+                }
+            });
+
+            tableHTML += "</table>";
+            return tableHTML;
+        }
+
+        // Handle PDF printing for scan results
+        document.getElementById('printPdf').onclick = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const resultsText = document.getElementById('results').innerText;
+            const lines = resultsText.split('\n');
+            let y = 10; // Starting Y position for text
+            const pageHeight = doc.internal.pageSize.height; // Get the height of the page
+            const lineHeight = 10; // Height of each line
+
+            // Add each line to the PDF
+            lines.forEach(line => {
+                if (y + lineHeight > pageHeight) { // Check if the next line will fit
+                    doc.addPage(); // Add a new page
+                    y = 10; // Reset Y position for the new page
+                }
+                doc.text(line, 10, y);
+                y += lineHeight; // Move down for the next line
+            });
+
+            doc.save('scan_results.pdf');
+        };
+
+        // Handle PDF printing for MTR results
+        document.getElementById('printMtrPdf').onclick = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const mtrResultsText = document.getElementById('mtrResults').innerHTML; // Get the HTML for the MTR results
+            const lines = mtrResultsText.split('<tr>').slice(1); // Split by rows, skip the first empty element
+            let y = 10; // Starting Y position for text
+            const pageHeight = doc.internal.pageSize.height; // Get the height of the page
+            const lineHeight = 10; // Height of each line
+
+            // Add table header
+            doc.text("MTR Results", 10, y);
+            y += 10; // Move down for the header
+
+            // Add each row to the PDF
+            lines.forEach(line => {
+                const cols = line.split('</td>').map(col => col.replace(/<[^>]+>/g, '').trim()); // Remove HTML tags and trim
+                if (cols.length > 0) {
+                    const rowText = cols.join(' | '); // Join columns with a separator
+                    if (y + lineHeight > pageHeight) { // Check if the next line will fit
+                        doc.addPage(); // Add a new page
+                        y = 10; // Reset Y position for the new page
+                    }
+                    doc.text(rowText, 10, y);
+                    y += lineHeight; // Move down for the next line
+                }
+            });
+
+            doc.save('mtr_results.pdf');
+        };
+    </script>
+</body>
+</html>
