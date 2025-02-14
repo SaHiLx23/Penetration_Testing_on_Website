@@ -186,6 +186,11 @@ class WebsitePentestToolkit:
     def run_traceroute(self) -> dict:
         """Run Traceroute using Linux/macOS or Windows"""
         try:
+            if not self.hostname:  # Ensure hostname is not empty
+                return {'error': 'Invalid hostname. Please enter a valid URL.', 'output': None}
+
+            print(f"Running traceroute on: {self.hostname}")  # Debugging log
+
             if os.name == "nt":  # Windows uses tracert
                 cmd = f'tracert -d {self.hostname}'
             else:  # Linux/macOS uses traceroute
@@ -203,6 +208,7 @@ class WebsitePentestToolkit:
 
         except Exception as e:
             return {'error': str(e)}
+
 
 class XSSScanner:
     def __init__(self, target_url: str):
