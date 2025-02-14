@@ -178,9 +178,10 @@ function formatTracerouteOutput(output) {
     const lines = output.split("\n");
     let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
-    let previousHop = null;  // Store the last valid hop number
+    let previousHop = null;  // Track the last hop number
     let ipAddresses = [];
     let responseTimes = [];
+    let timeoutHops = new Set(); // Prevent duplicate timeout hops
 
     lines.forEach(line => {
         // Match standard traceroute output with multiple IPs and response times
@@ -192,15 +193,15 @@ function formatTracerouteOutput(output) {
             const times = `${match[3]}, ${match[4]}, ${match[5]}`;
 
             if (previousHop !== hopNumber) {
-                // If it's a new hop, flush the previous hop data
-                if (previousHop !== null) {
+                // Flush previous hop data before processing the next hop
+                if (previousHop !== null && ipAddresses.length > 0) {
                     tableHTML += `<tr>
                         <td>${previousHop}</td>
                         <td>${ipAddresses.join(", ")}</td>
                         <td>${responseTimes.join(" | ")}</td>
                     </tr>`;
                 }
-                // Reset for the new hop
+                // Reset for new hop
                 ipAddresses = [];
                 responseTimes = [];
                 previousHop = hopNumber;
@@ -209,30 +210,24 @@ function formatTracerouteOutput(output) {
             ipAddresses.push(ipAddress);
             responseTimes.push(times);
         } 
-        // Handle timeouts while preserving hop numbers
+        // Handle timeouts while avoiding duplicates
         else {
             const timeoutMatch = line.match(/^\s*(\d+)\s+\* \* \*/);
             if (timeoutMatch) {
-                if (previousHop !== null) {
+                const hopNumber = timeoutMatch[1];
+                if (!timeoutHops.has(hopNumber)) { // Prevent duplicate timeouts
+                    timeoutHops.add(hopNumber);
                     tableHTML += `<tr>
-                        <td>${previousHop}</td>
-                        <td>${ipAddresses.join(", ")}</td>
-                        <td>${responseTimes.join(" | ")}</td>
+                        <td>${hopNumber}</td>
+                        <td colspan="2" style="color: red;">Request timed out.</td>
                     </tr>`;
                 }
-                previousHop = timeoutMatch[1];
-                tableHTML += `<tr>
-                    <td>${timeoutMatch[1]}</td>
-                    <td colspan="2" style="color: red;">Request timed out.</td>
-                </tr>`;
-                ipAddresses = [];
-                responseTimes = [];
             }
         }
     });
 
-    // Add the last hop data if it exists
-    if (previousHop !== null) {
+    // Add the last hop data if it exists and is valid
+    if (previousHop !== null && ipAddresses.length > 0) {
         tableHTML += `<tr>
             <td>${previousHop}</td>
             <td>${ipAddresses.join(", ")}</td>
@@ -243,6 +238,7 @@ function formatTracerouteOutput(output) {
     tableHTML += "</table>";
     return tableHTML;
 }
+
 
 
 
