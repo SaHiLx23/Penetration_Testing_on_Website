@@ -179,21 +179,31 @@ function formatTracerouteOutput(output) {
     let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
     lines.forEach(line => {
-        // Match standard traceroute output with hop number, IP, and response times
+        // Match standard traceroute output with multiple IPs and response times
         const match = line.match(/^\s*(\d+)\s+((?:\d{1,3}\.){3}\d{1,3}|\*)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)(?:\s+((?:\d{1,3}\.){3}\d{1,3}))?/);
 
         if (match) {
             const hopNumber = match[1];
-            const ipAddress = match[6] ? match[6] : match[2]; // If two IPs exist, use the last one
+
+            // Extract all IPs if multiple exist
+            let ipAddresses = [];
+            const ipRegex = /((?:\d{1,3}\.){3}\d{1,3})/g;
+            let ipMatch;
+            while ((ipMatch = ipRegex.exec(line)) !== null) {
+                ipAddresses.push(ipMatch[1]);
+            }
+
+            // Join multiple IPs with commas
+            const ipAddress = ipAddresses.length > 0 ? ipAddresses.join(", ") : "N/A";
             const responseTimes = `${match[3]}, ${match[4]}, ${match[5]}`;
 
             tableHTML += `<tr>
                 <td>${hopNumber}</td>
-                <td>${ipAddress !== "*" ? ipAddress : "N/A"}</td>
+                <td>${ipAddress}</td>
                 <td>${responseTimes}</td>
             </tr>`;
         } 
-        // Handle timeouts while preserving the hop number
+        // Handle timeouts while preserving hop numbers
         else {
             const timeoutMatch = line.match(/^\s*(\d+)\s+\* \* \*/);
             if (timeoutMatch) {
@@ -208,7 +218,6 @@ function formatTracerouteOutput(output) {
     tableHTML += "</table>";
     return tableHTML;
 }
-
 
 
 
