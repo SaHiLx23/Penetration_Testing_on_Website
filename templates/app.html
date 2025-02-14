@@ -132,42 +132,44 @@
             document.getElementById('printPdf').style.display = 'block'; // Show the Print PDF button
         };
 
-        // Handle MTR button click
+    
+        // Handle Traceroute button click
         document.getElementById('mtrButton').onclick = async function() {
             const url = document.getElementById('url').value; // Get user input
             const domain = url.replace(/https?:\/\//, '').split('/')[0]; // Extract domain name
-            const response = await fetch('/mtr', {
+
+            const response = await fetch('/traceroute', {  // ✅ Change from `/mtr` to `/traceroute`
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ url: domain }) // Send only the domain
             });
 
             try {
-                const tracertResults = await response.json();
-                console.log("Tracert Output:", tracertResults); // Debugging log
+                const tracerouteResults = await response.json();
+                console.log("Traceroute Output:", tracerouteResults); // Debugging log
 
-                if (tracertResults.error) {
-                    document.getElementById('mtrResultContent').innerText = "Error running Tracert: " + tracertResults.error;
+                if (tracerouteResults.error) {
+                    document.getElementById('mtrResultContent').innerText = "Error running Traceroute: " + tracerouteResults.error;
                     return;
-                }
+                 }
 
                 // Ensure output is not empty
-                if (!tracertResults.output || tracertResults.output.trim() === "") {
-                    document.getElementById('mtrResultContent').innerText = "Tracert returned no output.";
+                if (!tracerouteResults.output || tracerouteResults.output.trim() === "") {
+                    document.getElementById('mtrResultContent').innerText = "Traceroute returned no output.";
                     return;
                 }
 
-                // Convert Tracert output to an HTML-friendly format
-                document.getElementById('mtrResultContent').innerHTML = formatTracertOutput(tracertResults.output);
+                // Convert Traceroute output to an HTML-friendly format
+                document.getElementById('mtrResultContent').innerHTML = formatTracerouteOutput(tracerouteResults.output);
                 document.getElementById('printMtrPdf').style.display = 'block'; // Show Print PDF button
             } catch (error) {
-                console.error("Error parsing Tracert response:", error);
-                document.getElementById('mtrResultContent').innerText = "Error running Tracert.";
+                console.error("Error parsing Traceroute response:", error);
+                document.getElementById('mtrResultContent').innerText = "Error running Traceroute.";
             }
         };
 
-        // Function to format Tracert output into a table
-        function formatTracertOutput(output) {
+        // Function to format Traceroute output into a table
+        function formatTracerouteOutput(output) {
             const lines = output.split("\n");
             let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
@@ -190,6 +192,7 @@
             tableHTML += "</table>";
             return tableHTML;
         }
+
 
         // Handle PDF printing for scan results
         document.getElementById('printPdf').onclick = function() {
