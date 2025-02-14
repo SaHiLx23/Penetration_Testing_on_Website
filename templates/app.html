@@ -178,42 +178,67 @@ function formatTracerouteOutput(output) {
     const lines = output.split("\n");
     let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
+    let previousHop = null;  // Store the last valid hop number
+    let ipAddresses = [];
+    let responseTimes = [];
+
     lines.forEach(line => {
         // Match standard traceroute output with multiple IPs and response times
-        const match = line.match(/^\s*(\d+)\s+((?:\d{1,3}\.){3}\d{1,3}|\*)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)(?:\s+((?:\d{1,3}\.){3}\d{1,3}))?/);
+        const match = line.match(/^\s*(\d+)\s+((?:\d{1,3}\.){3}\d{1,3}|\*)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)/);
 
         if (match) {
             const hopNumber = match[1];
+            const ipAddress = match[2];
+            const times = `${match[3]}, ${match[4]}, ${match[5]}`;
 
-            // Extract all IPs if multiple exist
-            let ipAddresses = [];
-            const ipRegex = /((?:\d{1,3}\.){3}\d{1,3})/g;
-            let ipMatch;
-            while ((ipMatch = ipRegex.exec(line)) !== null) {
-                ipAddresses.push(ipMatch[1]);
+            if (previousHop !== hopNumber) {
+                // If it's a new hop, flush the previous hop data
+                if (previousHop !== null) {
+                    tableHTML += `<tr>
+                        <td>${previousHop}</td>
+                        <td>${ipAddresses.join(", ")}</td>
+                        <td>${responseTimes.join(" | ")}</td>
+                    </tr>`;
+                }
+                // Reset for the new hop
+                ipAddresses = [];
+                responseTimes = [];
+                previousHop = hopNumber;
             }
 
-            // Join multiple IPs with commas
-            const ipAddress = ipAddresses.length > 0 ? ipAddresses.join(", ") : "N/A";
-            const responseTimes = `${match[3]}, ${match[4]}, ${match[5]}`;
-
-            tableHTML += `<tr>
-                <td>${hopNumber}</td>
-                <td>${ipAddress}</td>
-                <td>${responseTimes}</td>
-            </tr>`;
+            ipAddresses.push(ipAddress);
+            responseTimes.push(times);
         } 
         // Handle timeouts while preserving hop numbers
         else {
             const timeoutMatch = line.match(/^\s*(\d+)\s+\* \* \*/);
             if (timeoutMatch) {
+                if (previousHop !== null) {
+                    tableHTML += `<tr>
+                        <td>${previousHop}</td>
+                        <td>${ipAddresses.join(", ")}</td>
+                        <td>${responseTimes.join(" | ")}</td>
+                    </tr>`;
+                }
+                previousHop = timeoutMatch[1];
                 tableHTML += `<tr>
-                    <td>${timeoutMatch[1]}</td> <!-- Hop Number -->
+                    <td>${timeoutMatch[1]}</td>
                     <td colspan="2" style="color: red;">Request timed out.</td>
                 </tr>`;
+                ipAddresses = [];
+                responseTimes = [];
             }
         }
     });
+
+    // Add the last hop data if it exists
+    if (previousHop !== null) {
+        tableHTML += `<tr>
+            <td>${previousHop}</td>
+            <td>${ipAddresses.join(", ")}</td>
+            <td>${responseTimes.join(" | ")}</td>
+        </tr>`;
+    }
 
     tableHTML += "</table>";
     return tableHTML;
