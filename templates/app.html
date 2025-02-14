@@ -179,17 +179,21 @@ function formatTracerouteOutput(output) {
     let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
     lines.forEach(line => {
-        // Match standard traceroute output with hop number, IP, and response times
-        const match = line.match(/^\s*(\d+)\s+([\d\.\*]+|\*)\s+([\d\.\*]+ ms|\*+)\s+([\d\.\*]+ ms|\*+)\s+([\d\.\*]+ ms|\*+)\s*(.*)$/);
+        // Match standard traceroute output (handles both IPs before and after response times)
+        const match = line.match(/^\s*(\d+)\s+((?:\d{1,3}\.){3}\d{1,3}|\*)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)(?:\s+((?:\d{1,3}\.){3}\d{1,3}))?/);
 
         if (match) {
+            const hopNumber = match[1];
+            const ipAddress = match[6] ? match[6] : match[2]; // Use last match as IP if available, else take first
+            const responseTimes = `${match[3]}, ${match[4]}, ${match[5]}`;
+
             tableHTML += `<tr>
-                <td>${match[1]}</td> <!-- Hop Number -->
-                <td>${match[6] ? match[6] : "N/A"}</td> <!-- IP Address or Hostname -->
-                <td>${match[3]}, ${match[4]}, ${match[5]}</td> <!-- Response Times -->
+                <td>${hopNumber}</td>
+                <td>${ipAddress !== "*" ? ipAddress : "N/A"}</td>
+                <td>${responseTimes}</td>
             </tr>`;
         } 
-        // Handle timeouts while preserving the hop number
+        // Handle timeouts while preserving hop number
         else {
             const timeoutMatch = line.match(/^\s*(\d+)\s+\* \* \*/);
             if (timeoutMatch) {
@@ -204,6 +208,7 @@ function formatTracerouteOutput(output) {
     tableHTML += "</table>";
     return tableHTML;
 }
+
 
 
 // Handle PDF printing for MTR results
