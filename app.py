@@ -184,13 +184,20 @@ class WebsitePentestToolkit:
             return {'error': str(e)}
     
     def run_traceroute(self) -> dict:
-        """Run Traceroute using Linux/macOS command"""
+        """Run Traceroute using Linux/macOS or Windows"""
         try:
-            cmd = f'traceroute {self.hostname}'
+            if os.name == "nt":  # Windows uses tracert
+                cmd = f'tracert -d {self.hostname}'
+            else:  # Linux/macOS uses traceroute
+                cmd = f'traceroute -n {self.hostname}'
+
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
             if result.returncode != 0:
                 return {'error': f'Traceroute command failed: {result.stderr}', 'output': None}
+
+            if not result.stdout.strip():  # Handle empty output
+                return {'error': 'Traceroute returned no output. It may be blocked by a firewall or require sudo.', 'output': None}
 
             return {'output': result.stdout.strip(), 'error': None}
 
