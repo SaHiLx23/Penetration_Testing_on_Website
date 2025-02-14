@@ -183,20 +183,19 @@ class WebsitePentestToolkit:
         except Exception as e:
             return {'error': str(e)}
     
-    def run_tracert(self) -> dict:
-        """Run Tracert instead of MTR using Windows command"""
+    def run_traceroute(self) -> dict:
+        """Run Traceroute using Linux/macOS command"""
         try:
-            cmd = f'tracert -d {self.target_url}'  # `-d` prevents hostname resolution for speed
+            cmd = f'traceroute {self.hostname}'
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
             if result.returncode != 0:
-                return {'error': f'Tracert command failed: {result.stderr}', 'output': None}
+                return {'error': f'Traceroute command failed: {result.stderr}', 'output': None}
 
             return {'output': result.stdout.strip(), 'error': None}
 
         except Exception as e:
             return {'error': str(e)}
-
 
 class XSSScanner:
     def __init__(self, target_url: str):
@@ -458,23 +457,23 @@ def scan():
 
     return jsonify(results)
 
-@app.route('/mtr', methods=['POST'])
-def tracert_scan():
+@app.route('/traceroute', methods=['POST'])
+def traceroute_scan():
     target_url = request.form.get('url')
 
     if not target_url:
         return jsonify({'error': 'No URL provided'}), 400  # Return HTTP 400 if no URL is provided
 
     toolkit = WebsitePentestToolkit(target_url)  # Create an instance of the class
-    tracert_results = toolkit.run_tracert()  # Call run_tracert() from the class
+    traceroute_results = toolkit.run_traceroute()  # Call run_traceroute() from the class
 
     # Debugging logs for Flask console
-    print(f"Tracert Results for {target_url}: {tracert_results}")
+    print(f"Traceroute Results for {target_url}: {traceroute_results}")
 
-    if tracert_results.get('error'):
-        return jsonify({'error': tracert_results['error']}), 500  # Return HTTP 500 if Tracert fails
+    if traceroute_results.get('error'):
+        return jsonify({'error': traceroute_results['error']}), 500  # Return HTTP 500 if Traceroute fails
 
-    return jsonify(tracert_results)  # Return results as JSON
+    return jsonify(traceroute_results)  # Return results as JSON
 
 
 if __name__ == "__main__":
