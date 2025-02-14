@@ -132,11 +132,15 @@
             document.getElementById('printPdf').style.display = 'block'; // Show the Print PDF button
         };
 
-    
-      // Handle MTR button click
-document.getElementById('mtrButton').onclick = async function() {
-    const url = document.getElementById('url').value;
+    document.getElementById('mtrButton').onclick = async function() {
+    const url = document.getElementById('url').value.trim();
+    if (!url) {
+        alert("Please enter a valid URL.");
+        return;
+    }
+
     const domain = url.replace(/https?:\/\//, '').split('/')[0];
+    console.log("Extracted Domain:", domain); // Debugging
 
     const response = await fetch('/traceroute', {
         method: 'POST',
@@ -151,7 +155,7 @@ document.getElementById('mtrButton').onclick = async function() {
         const resultContainer = document.getElementById('mtrResultContent');
 
         if (tracerouteResults.error) {
-            resultContainer.innerText = `Error running Traceroute: ${tracerouteResults.error}`;
+            resultContainer.innerHTML = `<p style='color: red;'>Error running Traceroute: ${tracerouteResults.error}</p>`;
             return;
         }
 
@@ -168,30 +172,40 @@ document.getElementById('mtrButton').onclick = async function() {
     }
 };
 
-        // Function to format Traceroute output into a table
-        function formatTracerouteOutput(output) {
-            const lines = output.split("\n");
-            let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
+// Function to format Traceroute output into a table
+function formatTracerouteOutput(output) {
+    const lines = output.split("\n");
+    let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
-            lines.forEach(line => {
-                const match = line.match(/^\s*(\d+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(.*)$/);
+    lines.forEach(line => {
+        const match = line.match(/^\s*(\d+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(.*)$/);
 
-                if (match) {
-                    tableHTML += `<tr>
-                        <td>${match[1]}</td> <!-- Hop Number -->
-                        <td>${match[5]}</td> <!-- IP Address or Hostname -->
-                        <td>${match[2]}, ${match[3]}, ${match[4]}</td> <!-- Response Times -->
-                    </tr>`;
-                } else if (line.includes("Request timed out.")) {
-                    tableHTML += `<tr>
-                        <td colspan="3">${line.trim()}</td>
-                    </tr>`;
-                }
-            });
-
-            tableHTML += "</table>";
-            return tableHTML;
+        if (match) {
+            tableHTML += `<tr>
+                <td>${match[1]}</td>
+                <td>${match[5]}</td>
+                <td>${match[2]}, ${match[3]}, ${match[4]}</td>
+            </tr>`;
+        } else if (line.includes("Request timed out.")) {
+            tableHTML += `<tr><td colspan="3">${line.trim()}</td></tr>`;
         }
+    });
+
+    tableHTML += "</table>";
+    return tableHTML;
+}
+
+// Handle PDF printing for MTR results
+document.getElementById('printMtrPdf').onclick = function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const mtrResultsText = document.getElementById('mtrResults').innerHTML;
+    
+    doc.text("MTR Results", 10, 10);
+    doc.fromHTML(mtrResultsText, 10, 20);
+    
+    doc.save('mtr_results.pdf');
+};
 
 
         // Handle PDF printing for scan results
