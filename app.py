@@ -182,30 +182,20 @@ class WebsitePentestToolkit:
             }
         except Exception as e:
             return {'error': str(e)}
-
+    
     def run_tracert(self) -> dict:
-        """Run Traceroute on Windows, Use Ping on Linux if Traceroute is Missing"""
+        """Run Tracert instead of MTR using Windows command"""
         try:
-            if os.name == 'nt':  # Windows
-                cmd = f'tracert -d {self.target_url}'
-            else:  # Linux (Render)
-                # Check if traceroute is installed
-                if subprocess.run("which traceroute", shell=True, capture_output=True).returncode == 0:
-                    cmd = f'traceroute -n {self.target_url}'
-                else:
-                    # Use ping as a fallback if traceroute is not available
-                    cmd = f'ping -c 4 {self.target_url}'
-
+            cmd = f'tracert -d {self.target_url}'  # `-d` prevents hostname resolution for speed
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
             if result.returncode != 0:
-                return {'error': f'Command failed: {result.stderr}', 'output': None}
+                return {'error': f'Tracert command failed: {result.stderr}', 'output': None}
 
             return {'output': result.stdout.strip(), 'error': None}
 
         except Exception as e:
             return {'error': str(e)}
-
 
 
 class XSSScanner:
@@ -473,17 +463,19 @@ def tracert_scan():
     target_url = request.form.get('url')
 
     if not target_url:
-        return jsonify({'error': 'No URL provided'}), 400
+        return jsonify({'error': 'No URL provided'}), 400  # Return HTTP 400 if no URL is provided
 
-    toolkit = WebsitePentestToolkit(target_url)  
-    tracert_results = toolkit.run_tracert()
+    toolkit = WebsitePentestToolkit(target_url)  # Create an instance of the class
+    tracert_results = toolkit.run_tracert()  # Call run_tracert() from the class
 
-    print(f"Traceroute Output for {target_url}: {tracert_results}")  # Debugging log
+    # Debugging logs for Flask console
+    print(f"Tracert Results for {target_url}: {tracert_results}")
 
-    return jsonify(tracert_results)  
+    if tracert_results.get('error'):
+        return jsonify({'error': tracert_results['error']}), 500  # Return HTTP 500 if Tracert fails
 
+    return jsonify(tracert_results)  # Return results as JSON
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Use PORT from env or default to 5000
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(debug=True)
