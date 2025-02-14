@@ -178,43 +178,39 @@ function formatTracerouteOutput(output) {
     const lines = output.split("\n");
     let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
-    let results = {}; // Store hop data by hop number
+    let results = {}; // Store hops in an ordered object
+    let maxHop = 0;   // Track the highest hop number
 
     lines.forEach(line => {
         // Match standard traceroute output (IP and response times)
         const match = line.match(/^\s*(\d+)\s+((?:\d{1,3}\.){3}\d{1,3}|\*)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)/);
 
         if (match) {
-            const hopNumber = match[1];
-            const ipAddress = match[2];
-            const times = `${match[3]}, ${match[4]}, ${match[5]}`;
+            const hopNumber = parseInt(match[1]);
+            const ipAddress = match[2] === "*" ? "Request timed out." : match[2];
+            const times = ipAddress === "Request timed out." ? "" : `${match[3]}, ${match[4]}, ${match[5]}`;
 
             results[hopNumber] = { ipAddress, times };
-        } else {
-            // Handle timeouts
-            const timeoutMatch = line.match(/^\s*(\d+)\s+\* \* \*/);
-            if (timeoutMatch) {
-                const hopNumber = timeoutMatch[1];
-                results[hopNumber] = { ipAddress: "Request timed out.", times: "" };
-            }
+            maxHop = Math.max(maxHop, hopNumber); // Track highest hop seen
         }
     });
 
-    // Ensure hops are displayed in order
-    Object.keys(results)
-        .sort((a, b) => parseInt(a) - parseInt(b))
-        .forEach(hopNumber => {
-            tableHTML += `<tr>
-                <td>${hopNumber}</td>
-                <td>${results[hopNumber].ipAddress}</td>
-                <td>${results[hopNumber].times}</td>
-            </tr>`;
-        });
+    // Ensure all hops from 1 to maxHop are displayed
+    for (let i = 1; i <= maxHop; i++) {
+        if (!results[i]) {
+            results[i] = { ipAddress: "Request timed out.", times: "" }; // Fill missing hops
+        }
+
+        tableHTML += `<tr>
+            <td>${i}</td>
+            <td>${results[i].ipAddress}</td>
+            <td>${results[i].times}</td>
+        </tr>`;
+    }
 
     tableHTML += "</table>";
     return tableHTML;
 }
-
 
 
 
