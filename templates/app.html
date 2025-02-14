@@ -179,24 +179,19 @@ function formatTracerouteOutput(output) {
     let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
     lines.forEach(line => {
-        // Match standard traceroute output
-        const match = line.match(/^\s*(\d+)\s+([\d\.\*]+|\*)\s+([\d\.\*]+ ms|\*+)\s+([\d\.\*]+ ms|\*+)\s+([\d\.\*]+ ms|\*+)\s+(.*)$/);
+        const match = line.match(/^\s*(\d+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(.*)$/);
 
         if (match) {
             tableHTML += `<tr>
                 <td>${match[1]}</td> <!-- Hop Number -->
-                <td>${match[6]}</td> <!-- IP Address or Hostname -->
-                <td>${match[3]}, ${match[4]}, ${match[5]}</td> <!-- Response Times -->
+                <td>${match[5]}</td> <!-- IP Address or Hostname -->
+                <td>${match[2]}, ${match[3]}, ${match[4]}</td> <!-- Response Times -->
             </tr>`;
-        } 
-        // Handle timeouts explicitly
-        else if (line.includes("* * *")) {
-            const hopMatch = line.match(/^\s*(\d+)/); // Extract hop number if available
-            const hopNumber = hopMatch ? hopMatch[1] : "Unknown";
-
+        } else if (line.includes("Request timed out.")) {
             tableHTML += `<tr>
-                <td>${hopNumber}</td>
-                <td colspan="2" style="color: red;">Request timed out.</td>
+                <td>${line.split(' ')[0]}</td> <!-- Hop Number -->
+                <td>*</td> <!-- No IP Address -->
+                <td>Request timed out.</td> <!-- Response Times -->
             </tr>`;
         }
     });
@@ -204,7 +199,6 @@ function formatTracerouteOutput(output) {
     tableHTML += "</table>";
     return tableHTML;
 }
-
 
 
 // Handle PDF printing for MTR results
