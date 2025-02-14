@@ -178,27 +178,39 @@ function formatTracerouteOutput(output) {
     const lines = output.split("\n");
     let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
-    let results = {}; // Store hops in an ordered object
-    let maxHop = 0;   // Track the highest hop number
+    let results = {};
+    let maxHop = 0;
 
     lines.forEach(line => {
-        // Match standard traceroute output (IP and response times)
-        const match = line.match(/^\s*(\d+)\s+((?:\d{1,3}\.){3}\d{1,3}|\*)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)\s+([\d\.]+ ms|\*+)/);
+        const match = line.match(/^\s*(\d+)\s+(.+)/);
 
         if (match) {
             const hopNumber = parseInt(match[1]);
-            const ipAddress = match[2] === "*" ? "Request timed out." : match[2];
-            const times = ipAddress === "Request timed out." ? "" : `${match[3]}, ${match[4]}, ${match[5]}`;
+            let details = match[2];
 
-            results[hopNumber] = { ipAddress, times };
-            maxHop = Math.max(maxHop, hopNumber); // Track highest hop seen
+            if (details.includes("* * *")) {
+                results[hopNumber] = { ipAddress: "Request timed out.", times: "" };
+            } else {
+                const ipMatches = details.match(/((?:\d{1,3}\.){3}\d{1,3})/g);
+                const timeMatches = details.match(/(\d+\.\d+ ms)/g);
+
+                let ipAddress = ipMatches ? ipMatches.join(", ") : "Request timed out.";
+                let times = timeMatches ? timeMatches.join(", ") : "";
+
+                // If at least one valid response exists, do not mark as timed out
+                if (ipMatches && ipMatches.length > 0) {
+                    results[hopNumber] = { ipAddress, times };
+                }
+            }
+
+            maxHop = Math.max(maxHop, hopNumber);
         }
     });
 
-    // Ensure all hops from 1 to maxHop are displayed
+    // Ensure all hops are displayed from 1 to maxHop
     for (let i = 1; i <= maxHop; i++) {
         if (!results[i]) {
-            results[i] = { ipAddress: "Request timed out.", times: "" }; // Fill missing hops
+            results[i] = { ipAddress: "Request timed out.", times: "" };
         }
 
         tableHTML += `<tr>
@@ -211,6 +223,7 @@ function formatTracerouteOutput(output) {
     tableHTML += "</table>";
     return tableHTML;
 }
+
 
 
 
