@@ -32,7 +32,14 @@ class WebsitePentestToolkit:
     def _extract_hostname(self, url: str) -> str:
         """Extract hostname from URL"""
         parsed_url = urllib.parse.urlparse(url)
-        return parsed_url.netloc.split(':')[0]
+
+        if not parsed_url.netloc:  # Handle cases where netloc is empty
+            return url.split('/')[0]  # Fallback to basic string split
+
+        hostname = parsed_url.netloc.split(':')[0]  # Remove port if present
+        print(f"Extracted Hostname: {hostname}")  # Debugging log
+        return hostname
+
 
     def _resolve_ip(self) -> str:
         """Resolve hostname to IP address"""
@@ -186,14 +193,14 @@ class WebsitePentestToolkit:
     def run_traceroute(self) -> dict:
         """Run Traceroute using Linux/macOS or Windows"""
         try:
-            if not self.hostname:  # Ensure hostname is not empty
+            if not self.hostname or self.hostname in ["", "None"]:  # Catch invalid hostnames
                 return {'error': 'Invalid hostname. Please enter a valid URL.', 'output': None}
 
             print(f"Running traceroute on: {self.hostname}")  # Debugging log
 
-            if os.name == "nt":  # Windows uses tracert
+            if os.name == "nt":  # Windows
                 cmd = f'tracert -d {self.hostname}'
-            else:  # Linux/macOS uses traceroute
+            else:  # Linux/macOS
                 cmd = f'traceroute -n {self.hostname}'
 
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
