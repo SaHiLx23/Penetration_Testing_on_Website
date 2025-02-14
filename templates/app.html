@@ -133,40 +133,40 @@
         };
 
     
-        // Handle Traceroute button click
-        document.getElementById('mtrButton').onclick = async function() {
-            const url = document.getElementById('url').value; // Get user input
-            const domain = url.replace(/https?:\/\//, '').split('/')[0]; // Extract domain name
+      // Handle MTR button click
+document.getElementById('mtrButton').onclick = async function() {
+    const url = document.getElementById('url').value;
+    const domain = url.replace(/https?:\/\//, '').split('/')[0];
 
-            const response = await fetch('/traceroute', {  // ✅ Change from `/mtr` to `/traceroute`
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ url: domain }) // Send only the domain
-            });
+    const response = await fetch('/mtr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ url: domain })
+    });
 
-            try {
-                const tracerouteResults = await response.json();
-                console.log("Traceroute Output:", tracerouteResults); // Debugging log
+    try {
+        const tracerouteResults = await response.json();
+        console.log("Traceroute Output:", tracerouteResults);
 
-                if (tracerouteResults.error) {
-                    document.getElementById('mtrResultContent').innerText = "Error running Traceroute: " + tracerouteResults.error;
-                    return;
-                 }
+        const resultContainer = document.getElementById('mtrResultContent');
 
-                // Ensure output is not empty
-                if (!tracerouteResults.output || tracerouteResults.output.trim() === "") {
-                    document.getElementById('mtrResultContent').innerText = "Traceroute returned no output.";
-                    return;
-                }
+        if (tracerouteResults.error) {
+            resultContainer.innerText = `Error running Traceroute: ${tracerouteResults.error}`;
+            return;
+        }
 
-                // Convert Traceroute output to an HTML-friendly format
-                document.getElementById('mtrResultContent').innerHTML = formatTracerouteOutput(tracerouteResults.output);
-                document.getElementById('printMtrPdf').style.display = 'block'; // Show Print PDF button
-            } catch (error) {
-                console.error("Error parsing Traceroute response:", error);
-                document.getElementById('mtrResultContent').innerText = "Error running Traceroute.";
-            }
-        };
+        if (!tracerouteResults.output || tracerouteResults.output.trim() === "") {
+            resultContainer.innerHTML = "<p style='color: red;'>Traceroute returned no output. Possible network restrictions or missing permissions.</p>";
+            return;
+        }
+
+        resultContainer.innerHTML = formatTracerouteOutput(tracerouteResults.output);
+        document.getElementById('printMtrPdf').style.display = 'block';
+    } catch (error) {
+        console.error("Error parsing Traceroute response:", error);
+        document.getElementById('mtrResultContent').innerHTML = "<p style='color: red;'>Error running Traceroute.</p>";
+    }
+};
 
         // Function to format Traceroute output into a table
         function formatTracerouteOutput(output) {
