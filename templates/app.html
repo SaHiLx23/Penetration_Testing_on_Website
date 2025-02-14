@@ -138,7 +138,7 @@ document.getElementById('mtrButton').onclick = async function() {
     const url = document.getElementById('url').value;
     const domain = url.replace(/https?:\/\//, '').split('/')[0];
 
-    const response = await fetch('/mtr', {
+    const response = await fetch('/traceroute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ url: domain })
