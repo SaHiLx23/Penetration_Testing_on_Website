@@ -179,22 +179,25 @@ function formatTracerouteOutput(output) {
     let tableHTML = "<table><tr><th>Hop</th><th>IP Address / Host</th><th>Response Times</th></tr>";
 
     lines.forEach(line => {
-        const match = line.match(/^\s*(\d+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(\d+ ms|\*+)\s+(.*)$/);
+        const match = line.match(/^\s*(\d+)\s+([\d\.\*]+)\s+([\d\.\*]+ ms|\*+)\s+([\d\.\*]+ ms|\*+)\s+([\d\.\*]+ ms|\*+)\s+(.*)$/);
 
         if (match) {
             tableHTML += `<tr>
-                <td>${match[1]}</td>
-                <td>${match[5]}</td>
-                <td>${match[2]}, ${match[3]}, ${match[4]}</td>
+                <td>${match[1]}</td> <!-- Hop Number -->
+                <td>${match[6]}</td> <!-- IP Address or Hostname -->
+                <td>${match[2]}, ${match[3]}, ${match[4]}</td> <!-- Response Times -->
             </tr>`;
-        } else if (line.includes("Request timed out.")) {
-            tableHTML += `<tr><td colspan="3">${line.trim()}</td></tr>`;
+        } else if (line.includes("* * *")) {
+            tableHTML += `<tr>
+                <td colspan="3" style="color: red;">Request timed out.</td>
+            </tr>`;
         }
     });
 
     tableHTML += "</table>";
     return tableHTML;
 }
+
 
 // Handle PDF printing for MTR results
 document.getElementById('printMtrPdf').onclick = function() {
