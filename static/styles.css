@@ -1,6 +1,7 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #EAECC6;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f4f8;
+    color: #333;
     margin: 0;
     padding: 0;
 }
@@ -8,15 +9,16 @@ body {
 .container {
     width: 300px;
     margin: 50px auto;
-    padding: 20px;
+    padding: 30px;
     background: white;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-h2 {
+h1 {
     text-align: center;
     color: #4a90e2;
+    size: 20px;
 }
 
 .form-group {
@@ -31,14 +33,14 @@ label {
 input[type="text"],
 input[type="email"],
 input[type="password"] {
-    width: 100%;
+    width: 90%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
 button {
-    width: 100%;
+    width: 97%;
     padding: 10px;
     background-color: #4a90e2;
     color: white;
