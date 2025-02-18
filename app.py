@@ -456,6 +456,9 @@ def logout():
 
 @app.route('/scan', methods=['POST'])
 def scan():
+    user_ip = request.remote_addr  # Get user's IP address
+    print(f"User IP Address: {user_ip}")  # Print to terminal
+    
     target_url = request.form['url']
     toolkit = WebsitePentestToolkit(target_url)
 
@@ -479,6 +482,9 @@ def scan():
 
 @app.route('/traceroute', methods=['POST'])
 def traceroute_scan():
+    user_ip = request.remote_addr  # Get user's IP address
+    print(f"User IP Address: {user_ip}")  # Print to terminal
+
     target_url = request.form.get('url')
 
     if not target_url:
