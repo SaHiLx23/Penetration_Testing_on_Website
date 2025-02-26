@@ -54,21 +54,21 @@
             background-color: #357ab8;
         }
         #results, #mtrResults {
-            display: flex; /* Set display to flex for horizontal layout */
-            flex-direction: row; /* Arrange items in a row */
-            flex-wrap: wrap; /* Allow wrapping to the next line if necessary */
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-top: 20px;
-            width: 80%; /* Set the same width for both boxes */
-            max-width: 600px;
-            max-height: 400px; /* Set a maximum height */
-            overflow-y: auto; /* Enable vertical scrolling */
-            overflow-x: auto; /* Enable horizontal scrolling if needed */
-            white-space: pre-wrap; /* Preserve whitespace and wrap lines */
-        }
+    display: flex; /* Set display to flex for horizontal layout */
+    flex-direction: column; /* Arrange items in a column */
+    flex-wrap: nowrap; /* Prevent wrapping */
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    width: 80%; /* Set the same width for both boxes */
+    max-width: 600px;
+    max-height: 400px; /* Set a maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: auto; /* Enable horizontal scrolling if needed */
+    white-space: pre-wrap; /* Preserve whitespace and wrap lines */
+}
     
         /* Optional: Add some spacing between the results */
         #results > div, #mtrResults > div {
